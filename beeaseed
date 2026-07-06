@@ -1,0 +1,251 @@
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+
+local LocalPlayer = Players.LocalPlayer
+
+local guiName = "aeshiyo_GUI"
+
+-- Определение родителя (CoreGui для чит-эксплуатов или PlayerGui для Studio)
+local parent = nil
+if pcall(function() return CoreGui.Name end) then
+    parent = CoreGui
+else
+    parent = LocalPlayer:WaitForChild("PlayerGui")
+end
+
+-- Удаление предыдущих версий интерфейса перед перезапуском
+for _, child in ipairs(parent:GetChildren()) do
+    if child.Name:match("aeshiyo") or child.Name:match("SonyaGUI") then
+        child:Destroy()
+    end
+end
+
+-- ==========================================
+-- === ЭТАП 1: МЕНЮ ВЫБОРА РАЗМЕРА (BOOT) ===
+-- ==========================================
+
+local BootGui = Instance.new("ScreenGui")
+BootGui.Name = guiName .. "_Boot"
+BootGui.Parent = parent
+BootGui.ResetOnSpawn = false
+
+local BootFrame = Instance.new("Frame")
+BootFrame.Size = UDim2.new(0, 300, 0, 200)
+BootFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+BootFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+BootFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+BootFrame.Parent = BootGui
+Instance.new("UICorner", BootFrame).CornerRadius = UDim.new(0, 12)
+Instance.new("UIStroke", BootFrame).Color = Color3.fromRGB(60, 60, 60)
+
+local BootTitle = Instance.new("TextLabel")
+BootTitle.Size = UDim2.new(1, 0, 0, 40)
+BootTitle.BackgroundTransparency = 1
+BootTitle.Text = "Выберите размер GUI"
+BootTitle.Font = Enum.Font.RobotoMono
+BootTitle.TextSize = 16
+BootTitle.TextColor3 = Color3.fromRGB(200, 200, 200)
+BootTitle.Parent = BootFrame
+
+local function createSizeBtn(text, yPos, scaleFactor)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 260, 0, 40)
+    btn.Position = UDim2.new(0.5, 0, 0, yPos)
+    btn.AnchorPoint = Vector2.new(0.5, 0)
+    btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    btn.Text = text
+    btn.Font = Enum.Font.RobotoMono
+    btn.TextSize = 14
+    btn.TextColor3 = Color3.fromRGB(180, 180, 180)
+    btn.Parent = BootFrame
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    Instance.new("UIStroke", btn).Color = Color3.fromRGB(50, 50, 50)
+    
+    btn.MouseButton1Click:Connect(function()
+        BootGui:Destroy()
+        LoadMainGUI(scaleFactor)
+    end)
+end
+
+createSizeBtn("Маленькое", 50, 0.8)
+createSizeBtn("Среднее", 100, 1.0)
+createSizeBtn("Большое", 150, 1.25)
+
+-- ==========================================
+-- === ЭТАП 2: ОСНОВНОЙ ПУСТОЙ ИНТЕРФЕЙС ===
+-- ==========================================
+
+function LoadMainGUI(guiScaleFactor)
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = guiName .. "_Main"
+    ScreenGui.Parent = parent
+    ScreenGui.ResetOnSpawn = false
+
+    -- Кнопка восстановления при скрытии
+    local RestoreBtn = Instance.new("TextButton")
+    RestoreBtn.Size = UDim2.new(0, 100, 0, 40)
+    RestoreBtn.Position = UDim2.new(0, 20, 0, 20)
+    RestoreBtn.BackgroundColor3 = Color3.fromRGB(13, 13, 13)
+    RestoreBtn.Text = "aeshiyo"
+    RestoreBtn.Font = Enum.Font.RobotoMono
+    RestoreBtn.TextSize = 14
+    RestoreBtn.TextColor3 = Color3.fromRGB(100, 100, 100)
+    RestoreBtn.Visible = false
+    RestoreBtn.Parent = ScreenGui
+    Instance.new("UICorner", RestoreBtn).CornerRadius = UDim.new(0, 4)
+    Instance.new("UIStroke", RestoreBtn).Color = Color3.fromRGB(50, 50, 50)
+    
+    local RestoreScale = Instance.new("UIScale", RestoreBtn)
+    RestoreScale.Scale = guiScaleFactor
+
+    -- Главное окно
+    local MainWindow = Instance.new("Frame")
+    MainWindow.Size = UDim2.new(0, 750, 0, 480)
+    MainWindow.Position = UDim2.new(0.5, 0, 0.5, 0)
+    MainWindow.AnchorPoint = Vector2.new(0.5, 0.5)
+    MainWindow.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+    MainWindow.Active = true
+    MainWindow.Parent = ScreenGui
+    
+    local MainUICorner = Instance.new("UICorner", MainWindow)
+    MainUICorner.CornerRadius = UDim.new(0, 12)
+    Instance.new("UIStroke", MainWindow).Color = Color3.fromRGB(40, 40, 40)
+    
+    local MainScale = Instance.new("UIScale", MainWindow)
+    MainScale.Scale = guiScaleFactor
+
+    -- Левая панель
+    local LeftPanel = Instance.new("Frame")
+    LeftPanel.Size = UDim2.new(0, 220, 1, 0)
+    LeftPanel.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
+    LeftPanel.BorderSizePixel = 0
+    LeftPanel.Parent = MainWindow
+    
+    local LeftPadding = Instance.new("UIPadding", LeftPanel)
+    LeftPadding.PaddingTop = UDim.new(0, 15)
+    LeftPadding.PaddingBottom = UDim.new(0, 15)
+    LeftPadding.PaddingLeft = UDim.new(0, 15)
+    LeftPadding.PaddingRight = UDim.new(0, 15)
+    
+    local LeftLayout = Instance.new("UIListLayout", LeftPanel)
+    LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    LeftLayout.Padding = UDim.new(0, 15)
+
+    -- Блок с кнопками управления окном (Слева Вверху)
+    local ControlsFrame = Instance.new("Frame")
+    ControlsFrame.Size = UDim2.new(1, 0, 0, 25)
+    ControlsFrame.BackgroundTransparency = 1
+    ControlsFrame.LayoutOrder = 1
+    ControlsFrame.Parent = LeftPanel
+    
+    local ControlsLayout = Instance.new("UIListLayout", ControlsFrame)
+    ControlsLayout.FillDirection = Enum.FillDirection.Horizontal
+    ControlsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    ControlsLayout.Padding = UDim.new(0, 8)
+
+    local function createControlBtn(text, order)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 25, 0, 25)
+        btn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+        btn.Text = text
+        btn.Font = Enum.Font.RobotoMono
+        btn.TextSize = 14
+        btn.TextColor3 = Color3.fromRGB(130, 130, 130)
+        btn.LayoutOrder = order
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+        Instance.new("UIStroke", btn).Color = Color3.fromRGB(50, 50, 50)
+        btn.Parent = ControlsFrame
+        return btn
+    end
+    
+    local CloseBtn = createControlBtn("✕", 1)
+    local MinBtn = createControlBtn("−", 2)
+    local FullBtn = createControlBtn("◻", 3)
+
+    -- Название чита/скрипта
+    local Logo = Instance.new("TextLabel")
+    Logo.Size = UDim2.new(1, 0, 0, 45)
+    Logo.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+    Logo.Text = "aeshiyo[be a seed?]"
+    Logo.Font = Enum.Font.RobotoMono
+    Logo.TextSize = 14
+    Logo.TextColor3 = Color3.fromRGB(220, 220, 220)
+    Logo.LayoutOrder = 2
+    Logo.Parent = LeftPanel
+    Instance.new("UICorner", Logo).CornerRadius = UDim.new(0, 6)
+    Instance.new("UIStroke", Logo).Color = Color3.fromRGB(45, 45, 45)
+
+    -- Разделительная линия
+    local Separator = Instance.new("Frame")
+    Separator.Size = UDim2.new(0, 1, 1, 0)
+    Separator.Position = UDim2.new(0, 220, 0, 0)
+    Separator.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    Separator.BorderSizePixel = 0
+    Separator.Parent = MainWindow
+
+    -- Правая рабочая панель (пустая для твоих будущих модулей)
+    local RightPanel = Instance.new("Frame")
+    RightPanel.Size = UDim2.new(1, -221, 1, 0)
+    RightPanel.Position = UDim2.new(0, 221, 0, 0)
+    RightPanel.BackgroundTransparency = 1
+    RightPanel.Parent = MainWindow
+    
+    local ContentScroll = Instance.new("ScrollingFrame")
+    ContentScroll.Size = UDim2.new(1, -30, 1, -30)
+    ContentScroll.Position = UDim2.new(0, 15, 0, 15)
+    ContentScroll.BackgroundTransparency = 1
+    ContentScroll.ScrollBarThickness = 3
+    ContentScroll.BorderSizePixel = 0
+    ContentScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    ContentScroll.Parent = RightPanel
+    
+    local ContentLayout = Instance.new("UIListLayout", ContentScroll)
+    ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    ContentLayout.Padding = UDim.new(0, 10)
+
+    -- Логика перетаскивания (Drag) интерфейса мышкой или пальцем
+    local dragging, dragStart, startPos
+    MainWindow.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true 
+            dragStart = input.Position 
+            startPos = MainWindow.Position
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            MainWindow.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then 
+            dragging = false 
+        end
+    end)
+
+    -- Функционал системных кнопок окна (Свернуть / Закрыть / Развернуть)
+    CloseBtn.MouseButton1Click:Connect(function() 
+        ScreenGui:Destroy() 
+    end)
+    
+    MinBtn.MouseButton1Click:Connect(function() 
+        MainWindow.Visible = false 
+        RestoreBtn.Visible = true 
+    end)
+    
+    RestoreBtn.MouseButton1Click:Connect(function() 
+        MainWindow.Visible = true 
+        RestoreBtn.Visible = false 
+    end)
+    
+    local isFullscreen = false
+    FullBtn.MouseButton1Click:Connect(function()
+        isFullscreen = not isFullscreen
+        MainWindow.Size = isFullscreen and UDim2.new(1, 0, 1, 0) or UDim2.new(0, 750, 0, 480)
+        MainUICorner.CornerRadius = isFullscreen and UDim.new(0, 0) or UDim.new(0, 12)
+        MainWindow.Position = UDim2.new(0.5, 0, 0.5, 0)
+    end)
+end
